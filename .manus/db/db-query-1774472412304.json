@@ -1,0 +1,55 @@
+{
+  "query": "SELECT id, name, cpf, party, state, role, declared_income_monthly FROM parliamentarians ORDER BY id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2c5FedMCkXcSGmx.root --database XWQsbiucg6gne5KSMqCyMw --execute SELECT id, name, cpf, party, state, role, declared_income_monthly FROM parliamentarians ORDER BY id;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "Ricardo Almeida Santos",
+      "cpf": "123.456.789-00",
+      "party": "PSD",
+      "state": "SP",
+      "role": "deputado_federal",
+      "declared_income_monthly": "33689.11"
+    },
+    {
+      "id": "2",
+      "name": "Fernanda Oliveira Costa",
+      "cpf": "234.567.890-11",
+      "party": "PT",
+      "state": "MG",
+      "role": "senador",
+      "declared_income_monthly": "33763.00"
+    },
+    {
+      "id": "3",
+      "name": "Carlos Eduardo Mendes",
+      "cpf": "345.678.901-22",
+      "party": "PL",
+      "state": "RJ",
+      "role": "deputado_federal",
+      "declared_income_monthly": "33689.11"
+    },
+    {
+      "id": "4",
+      "name": "Ana Paula Ferreira Lima",
+      "cpf": "456.789.012-33",
+      "party": "PSDB",
+      "state": "RS",
+      "role": "deputado_federal",
+      "declared_income_monthly": "33689.11"
+    },
+    {
+      "id": "5",
+      "name": "José Roberto Nascimento",
+      "cpf": "567.890.123-44",
+      "party": "MDB",
+      "state": "BA",
+      "role": "senador",
+      "declared_income_monthly": "33763.00"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tcpf\tparty\tstate\trole\tdeclared_income_monthly\n1\tRicardo Almeida Santos\t123.456.789-00\tPSD\tSP\tdeputado_federal\t33689.11\n2\tFernanda Oliveira Costa\t234.567.890-11\tPT\tMG\tsenador\t33763.00\n3\tCarlos Eduardo Mendes\t345.678.901-22\tPL\tRJ\tdeputado_federal\t33689.11\n4\tAna Paula Ferreira Lima\t456.789.012-33\tPSDB\tRS\tdeputado_federal\t33689.11\n5\tJosé Roberto Nascimento\t567.890.123-44\tMDB\tBA\tsenador\t33763.00\n",
+  "stderr": "",
+  "execution_time_ms": 945
+}

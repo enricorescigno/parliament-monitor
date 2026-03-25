@@ -11,6 +11,7 @@ import GhostEmployees from "./pages/GhostEmployees";
 import AssetAnalysis from "./pages/AssetAnalysis";
 import ContractAnalysis from "./pages/ContractAnalysis";
 import AuditReport from "./pages/AuditReport";
+import SyncAdmin from "./pages/SyncAdmin";
 
 function Router() {
   return (
@@ -22,6 +23,7 @@ function Router() {
       <Route path="/parlamentar/:id/patrimonio" component={AssetAnalysis} />
       <Route path="/parlamentar/:id/contratos" component={ContractAnalysis} />
       <Route path="/parlamentar/:id/relatorio" component={AuditReport} />
+      <Route path="/admin/sync" component={SyncAdmin} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

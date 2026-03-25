@@ -1,0 +1,9 @@
+{
+  "query": "\nCREATE TABLE `sync_logs` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`source` varchar(50) NOT NULL,\n\t`status` enum('running','success','error') NOT NULL,\n\t`started_at` timestamp NOT NULL DEFAULT (now()),\n\t`completed_at` timestamp,\n\t`records_imported` int DEFAULT 0,\n\t`records_updated` int DEFAULT 0,\n\t`error_count` int DEFAULT 0,\n\t`error_message` text,\n\tCONSTRAINT `sync_logs_id` PRIMARY KEY(`id`)\n);\n\nALTER TABLE `parliamentarians` ADD `external_id` varchar(128);\nALTER TABLE `parliamentarians` ADD CONSTRAINT `parliamentarians_external_id_unique` UNIQUE(`external_id`);\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2c5FedMCkXcSGmx.root --database XWQsbiucg6gne5KSMqCyMw --execute \nCREATE TABLE `sync_logs` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`source` varchar(50) NOT NULL,\n\t`status` enum('running','success','error') NOT NULL,\n\t`started_at` timestamp NOT NULL DEFAULT (now()),\n\t`completed_at` timestamp,\n\t`records_imported` int DEFAULT 0,\n\t`records_updated` int DEFAULT 0,\n\t`error_count` int DEFAULT 0,\n\t`error_message` text,\n\tCONSTRAINT `sync_logs_id` PRIMARY KEY(`id`)\n);\n\nALTER TABLE `parliamentarians` ADD `external_id` varchar(128);\nALTER TABLE `parliamentarians` ADD CONSTRAINT `parliamentarians_external_id_unique` UNIQUE(`external_id`);\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 515
+}

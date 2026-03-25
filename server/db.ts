@@ -1,4 +1,4 @@
-import { eq, like, or, desc, and } from "drizzle-orm";
+import { eq, like, or, desc, and, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   InsertUser, users,
@@ -100,10 +100,17 @@ export async function insertParliamentarian(data: InsertParliamentarian) {
   await db.insert(parliamentarians).values(data).onDuplicateKeyUpdate({ set: { name: data.name } });
 }
 
-export async function getAllParliamentarians() {
+export async function getAllParliamentarians(limit = 1000, offset = 0) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(parliamentarians).limit(100);
+  return db.select().from(parliamentarians).limit(limit).offset(offset);
+}
+
+export async function countParliamentarians() {
+  const db = await getDb();
+  if (!db) return 0;
+  const result = await db.select({ count: sql`COUNT(*)` }).from(parliamentarians);
+  return Number(result[0]?.count ?? 0);
 }
 
 // ─── Expenses ─────────────────────────────────────────────────────────────────

@@ -8,9 +8,13 @@ import {
   getExpensesByParliamentarian, getAssetsByParliamentarian,
   getContractsByParliamentarian, getEmployeesByParliamentarian,
   getLatestTrustScore, getAuditReports, insertAuditReport,
-  logSearch, getRecentSearches, getAllParliamentarians,
+  logSearch, getRecentSearches, getAllParliamentarians, countParliamentarians,
 } from "./db";
 import { invokeLLM } from "./_core/llm";
+import { runQuickSync, runFullSync } from "./sync";
+import { getDb } from "./db";
+import { syncLogs } from "../drizzle/schema";
+import { desc } from "drizzle-orm";
 
 export const appRouter = router({
   system: systemRouter,
@@ -50,8 +54,14 @@ export const appRouter = router({
         return parl;
       }),
 
-    listAll: publicProcedure.query(async () => {
-      return getAllParliamentarians();
+    listAll: publicProcedure
+      .input(z.object({ limit: z.number().optional(), offset: z.number().optional() }).optional())
+      .query(async ({ input }) => {
+        return getAllParliamentarians(input?.limit ?? 1000, input?.offset ?? 0);
+      }),
+
+    count: publicProcedure.query(async () => {
+      return countParliamentarians();
     }),
 
     // Full profile with all data
@@ -261,10 +271,40 @@ Seja específico, cite valores e datas quando relevante.`;
       }),
   }),
 
-  // ─── Recent Searches ────────────────────────────────────────────────────────
+  // ─── Recent Searches ────────────────────────────────────────────────────────────────
   searches: router({
     recent: publicProcedure.query(async () => {
       return getRecentSearches(8);
+    }),
+  }),
+
+  // ─── Sync ─────────────────────────────────────────────────────────────────────
+  sync: router({
+    // Quick sync: imports all parliamentarians (list only, no expense details)
+    quickSync: publicProcedure.mutation(async () => {
+      const result = await runQuickSync();
+      return result;
+    }),
+
+    // Full sync: imports with expense details (slow, use sparingly)
+    fullSync: publicProcedure.mutation(async () => {
+      const result = await runFullSync();
+      return result;
+    }),
+
+    // Get sync history
+    logs: publicProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) return [];
+      return db.select().from(syncLogs).orderBy(desc(syncLogs.id)).limit(20);
+    }),
+
+    // Get sync status (latest log)
+    status: publicProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) return null;
+      const logs = await db.select().from(syncLogs).orderBy(desc(syncLogs.id)).limit(1);
+      return logs[0] ?? null;
     }),
   }),
 });

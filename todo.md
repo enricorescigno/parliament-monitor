@@ -49,3 +49,22 @@
 - [x] Unit tests for score calculation
 - [x] Unit tests for CPF validation
 - [x] Unit tests for tRPC procedures
+
+## Kim Kataguiri — Adição de Parlamentar Real
+- [x] Pesquisar dados públicos reais do Kim Kataguiri (TSE, Câmara)
+- [x] Cadastrar parlamentar no banco de dados
+- [x] Inserir despesas, patrimônio, funcionários e contratos baseados em dados reais
+- [x] Calcular trust score
+
+## Integração Automática com APIs Públicas
+- [x] Explorar e testar API da Câmara dos Deputados (dadosabertos.camara.leg.br)
+- [x] Explorar e testar API do Senado Federal (legis.senado.leg.br/dadosabertos)
+- [x] Explorar dados abertos do TSE (dadosabertos.tse.jus.br)
+- [x] Implementar serviço de sync no backend: importar deputados federais (737)
+- [x] Implementar serviço de sync no backend: importar senadores (83)
+- [x] Implementar importação de despesas/cotas parlamentares via API Câmara
+- [x] Implementar importação de patrimônio via dados TSE
+- [x] Criar endpoint tRPC para disparar sincronização manual
+- [x] Criar painel de status de sincronização no frontend
+- [x] Executar importação inicial completa
+- [ ] Agendar sincronização periódica automática (roadmap)

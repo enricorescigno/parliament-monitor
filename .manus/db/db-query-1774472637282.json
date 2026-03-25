@@ -1,0 +1,13 @@
+{
+  "query": "SELECT id FROM parliamentarians WHERE cpf = '393.134.958-64';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2c5FedMCkXcSGmx.root --database XWQsbiucg6gne5KSMqCyMw --execute SELECT id FROM parliamentarians WHERE cpf = '393.134.958-64';",
+  "rows": [
+    {
+      "id": "30001"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\n30001\n",
+  "stderr": "",
+  "execution_time_ms": 54
+}

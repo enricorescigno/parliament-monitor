@@ -45,6 +45,7 @@ export const parliamentarians = mysqlTable("parliamentarians", {
   tse_candidate_id: varchar("tse_candidate_id", { length: 64 }),
   camara_deputy_id: varchar("camara_deputy_id", { length: 64 }),
   senado_senator_id: varchar("senado_senator_id", { length: 64 }),
+  external_id: varchar("external_id", { length: 128 }).unique(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -180,3 +181,19 @@ export const searchHistory = mysqlTable("search_history", {
 });
 
 export type SearchHistory = typeof searchHistory.$inferSelect;
+
+// ─── Sync Logs ────────────────────────────────────────────────────────────────
+export const syncLogs = mysqlTable("sync_logs", {
+  id: int("id").autoincrement().primaryKey(),
+  source: varchar("source", { length: 50 }).notNull(),
+  status: mysqlEnum("status", ["running", "success", "error"]).notNull(),
+  started_at: timestamp("started_at").defaultNow().notNull(),
+  completed_at: timestamp("completed_at"),
+  records_imported: int("records_imported").default(0),
+  records_updated: int("records_updated").default(0),
+  error_count: int("error_count").default(0),
+  error_message: text("error_message"),
+});
+
+export type SyncLog = typeof syncLogs.$inferSelect;
+export type InsertSyncLog = typeof syncLogs.$inferInsert;

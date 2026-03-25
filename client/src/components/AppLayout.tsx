@@ -1,5 +1,5 @@
 import { useLocation, Link } from "wouter";
-import { Search, BarChart2, Users, TrendingUp, FileText, Shield, Home, ChevronRight } from "lucide-react";
+import { Search, BarChart2, Users, TrendingUp, FileText, Shield, Home, ChevronRight, RefreshCw } from "lucide-react";
 import { ReactNode } from "react";
 
 interface AppLayoutProps {
@@ -34,10 +34,16 @@ export default function AppLayout({ children, parliamentarianId, parliamentarian
             </div>
           </Link>
 
-          <Link href="/search" className="brutal-btn-outline text-xs">
-            <Search size={13} />
-            Nova Busca
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link href="/admin/sync" className="brutal-btn-outline text-xs">
+              <RefreshCw size={13} />
+              Sincronizar
+            </Link>
+            <Link href="/search" className="brutal-btn-outline text-xs">
+              <Search size={13} />
+              Nova Busca
+            </Link>
+          </div>
         </div>
       </header>
 
