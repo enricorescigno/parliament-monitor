@@ -1,0 +1,1 @@
+ALTER TABLE `trust_scores` ADD `notes` text;

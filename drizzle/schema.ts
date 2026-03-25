@@ -146,6 +146,7 @@ export const trustScores = mysqlTable("trust_scores", {
   suspicious_contract_count: int("suspicious_contract_count").default(0),
   asset_discrepancy_value: decimal("asset_discrepancy_value", { precision: 15, scale: 2 }),
   analysis_details: json("analysis_details"),
+  notes: text("notes"),
   calculated_at: timestamp("calculated_at").defaultNow().notNull(),
 });
 

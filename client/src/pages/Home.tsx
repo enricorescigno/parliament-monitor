@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useLocation } from "wouter";
 import { Search, Shield, AlertTriangle, BarChart2, Users, TrendingUp, FileText, ArrowRight, ChevronRight } from "lucide-react";
 import { trpc } from "@/lib/trpc";
@@ -42,18 +42,53 @@ function ScoreRing({ score }: { score: number }) {
   );
 }
 
-const FEATURED = [
-  { id: 3, name: "Carlos Eduardo Mendes", party: "PL", state: "RJ", role: "Dep. Federal", score: 23, risk: "critical" },
-  { id: 5, name: "José Roberto Nascimento", party: "MDB", state: "BA", role: "Senador", score: 18, risk: "critical" },
-  { id: 1, name: "Ricardo Almeida Santos", party: "PSD", state: "SP", role: "Dep. Federal", score: 72, risk: "medium" },
-  { id: 2, name: "Fernanda Oliveira Costa", party: "PT", state: "MG", role: "Senadora", score: 85, risk: "low" },
-];
+// BUG 2 + 7 fix: removed hardcoded FEATURED array — now fetched dynamically from DB
+
+function FeaturedCard({
+  parl, index, riskLabel, getRisk, navigate
+}: {
+  parl: { id: number; name: string; party?: string | null; state?: string | null; role: string };
+  index: number;
+  riskLabel: Record<string, string>;
+  getRisk: (score: number) => string;
+  navigate: (to: string) => void;
+}) {
+  const { data: scoreData } = trpc.analysis.trustScore.useQuery({ parliamentarianId: parl.id });
+  const score = scoreData?.overall_score ?? 75;
+  const risk = getRisk(score);
+  const roleLabel = parl.role === "deputado_federal" ? "Dep. Federal" : parl.role === "senador" ? "Senador(a)" : parl.role;
+  return (
+    <div
+      className="p-6 cursor-pointer transition-colors hover:bg-gray-50"
+      style={{ borderRight: index < 3 ? "2px solid black" : "none", borderBottom: index < 2 ? "2px solid black" : "none" }}
+      onClick={() => navigate(`/parlamentar/${parl.id}`)}
+    >
+      <div className="flex items-start justify-between mb-4">
+        <span className={`data-tag text-xs risk-${risk}`} style={{ border: "none", padding: "0.15rem 0.5rem" }}>
+          {riskLabel[risk]}
+        </span>
+        <ScoreRing score={Math.round(score)} />
+      </div>
+      <h3 className="font-black text-base leading-tight mb-1">{parl.name}</h3>
+      <p className="mono-label">{roleLabel} · {parl.party ?? "—"}/{parl.state ?? "—"}</p>
+      <div className="mt-4 flex items-center gap-1 text-xs font-bold uppercase tracking-wider" style={{ color: "#666" }}>
+        Ver análise <ChevronRight size={12} />
+      </div>
+    </div>
+  );
+}
 
 export default function Home() {
   const [, navigate] = useLocation();
   const [query, setQuery] = useState("");
   const [cpfError, setCpfError] = useState("");
   const [isCpfMode, setIsCpfMode] = useState(false);
+
+  // BUG 2 + 7 fix: fetch real parliamentarians and count from DB
+  const { data: parlCount } = trpc.parliamentarian.count.useQuery();
+  const featuredInput = useMemo(() => ({ query: "", limit: 4 }), []);
+  const { data: featuredData } = trpc.parliamentarian.search.useQuery(featuredInput);
+  const featured = featuredData?.slice(0, 4) ?? [];
 
   const handleInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value;
@@ -87,6 +122,13 @@ export default function Home() {
   };
 
   const riskLabel: Record<string, string> = { critical: "CRÍTICO", high: "ALTO", medium: "MÉDIO", low: "BAIXO" };
+
+  function getRisk(score: number): string {
+    if (score < 30) return "critical";
+    if (score < 50) return "high";
+    if (score < 70) return "medium";
+    return "low";
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -170,7 +212,7 @@ export default function Home() {
         <div className="container py-6">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-0">
             {[
-              { label: "Parlamentares Monitorados", value: "5" },
+              { label: "Parlamentares Monitorados", value: parlCount != null ? String(parlCount) : "—" },
               { label: "Bases de Dados Integradas", value: "4" },
               { label: "Irregularidades Detectadas", value: "23" },
               { label: "Relatórios Gerados", value: "∞" },
@@ -197,26 +239,25 @@ export default function Home() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0" style={{ border: "2px solid black" }}>
-          {FEATURED.map((p, i) => (
-            <div
-              key={p.id}
-              className="p-6 cursor-pointer transition-colors hover:bg-gray-50"
-              style={{ borderRight: i < 3 ? "2px solid black" : "none", borderBottom: i < 2 ? "2px solid black" : "none" }}
-              onClick={() => navigate(`/parlamentar/${p.id}`)}
-            >
-              <div className="flex items-start justify-between mb-4">
-                <span className={`data-tag text-xs risk-${p.risk}`} style={{ border: "none", padding: "0.15rem 0.5rem" }}>
-                  {riskLabel[p.risk]}
-                </span>
-                <ScoreRing score={p.score} />
-              </div>
-              <h3 className="font-black text-base leading-tight mb-1">{p.name}</h3>
-              <p className="mono-label">{p.role} · {p.party}/{p.state}</p>
-              <div className="mt-4 flex items-center gap-1 text-xs font-bold uppercase tracking-wider" style={{ color: "#666" }}>
-                Ver análise <ChevronRight size={12} />
-              </div>
-            </div>
-          ))}
+          {featured.length === 0
+            ? Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="p-6 animate-pulse" style={{ borderRight: i < 3 ? "2px solid black" : "none" }}>
+                  <div className="h-4 bg-gray-200 rounded mb-4 w-16" />
+                  <div className="h-6 bg-gray-200 rounded mb-2 w-3/4" />
+                  <div className="h-3 bg-gray-100 rounded w-1/2" />
+                </div>
+              ))
+            : featured.map((p, i) => (
+                <FeaturedCard
+                  key={p.id}
+                  parl={p}
+                  index={i}
+                  riskLabel={riskLabel}
+                  getRisk={getRisk}
+                  navigate={navigate}
+                />
+              ))
+          }
         </div>
       </section>
 

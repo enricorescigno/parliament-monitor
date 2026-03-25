@@ -73,3 +73,13 @@
 - [x] Importar despesas reais via API Câmara para todos os deputados
 - [x] Sync automático na inicialização do servidor
 - [x] Exibir dados reais de despesas, funcionários e patrimônio nos perfis
+
+## Correções do Diagnóstico
+- [x] BUG 1: Adicionar coluna notes ao trust_scores (schema + migration + SQL)
+- [x] BUG 2: Home.tsx — substituir FEATURED hardcoded por query tRPC dinâmica
+- [x] BUG 3: syncLogs — salvar logId real e usar no update final
+- [x] BUG 4: syncExpensesForAll — verificar despesas por ano corrente, não total
+- [x] BUG 5: getDb() — usar connection pool em vez de conexão única
+- [x] BUG 6: runStartupSync — adicionar lock para evitar syncs paralelos
+- [x] BUG 7: Home.tsx — buscar scores reais do banco para os destaques
+- [x] BUG 8: SearchResults.tsx — buscar trust score para todos os resultados

@@ -417,17 +417,13 @@ export async function runFullSync(
 
   const startTime = Date.now();
 
-  // Log sync start
-  await db.insert(syncLogs).values({
+  // Log sync start — capture the real insertId
+  const logInsert = await db.insert(syncLogs).values({
     source: "full",
     status: "running",
     started_at: new Date(),
   });
-
-  let logId: number | null = null;
-  try {
-    // get latest log id (unused for now)
-  } catch {}
+  const logId: number | null = (logInsert as any)[0]?.insertId ?? (logInsert as any).insertId ?? null;
 
   try {
     console.log("[Sync] Starting full sync...");
@@ -442,7 +438,8 @@ export async function runFullSync(
 
     const duration = Date.now() - startTime;
 
-    // Update sync log
+    // Update sync log using the captured logId (avoids updating concurrent syncs)
+    const updateWhere = logId ? eq(syncLogs.id, logId) : eq(syncLogs.status, "running");
     await db.update(syncLogs)
       .set({
         status: "success",
@@ -451,7 +448,7 @@ export async function runFullSync(
         records_updated: deputadosResult.updated + senadoresResult.updated,
         error_count: deputadosResult.errors + senadoresResult.errors,
       })
-      .where(eq(syncLogs.status, "running"));
+      .where(updateWhere);
 
     console.log(`[Sync] Full sync completed in ${(duration / 1000).toFixed(1)}s`);
     console.log(`[Sync] Deputies: +${deputadosResult.imported} imported, ${deputadosResult.updated} updated, ${deputadosResult.errors} errors`);
@@ -460,9 +457,10 @@ export async function runFullSync(
     return { deputados: deputadosResult, senadores: senadoresResult, duration };
 
   } catch (e) {
+    const errWhere = logId ? eq(syncLogs.id, logId) : eq(syncLogs.status, "running");
     await db.update(syncLogs)
       .set({ status: "error", completed_at: new Date() })
-      .where(eq(syncLogs.status, "running"));
+      .where(errWhere);
     throw e;
   }
 }
@@ -676,15 +674,20 @@ export async function syncExpensesForAll(
     const camaraId = parseInt(match[1]);
 
     try {
-      // Check if already has expenses
+      // BUG 4 fix: check for expenses of the CURRENT year specifically, not any year
       const existingExpenses = await db.select({ id: expenses.id })
         .from(expenses)
-        .where(eq(expenses.parliamentarian_id, parl.id))
+        .where(
+          and(
+            eq(expenses.parliamentarian_id, parl.id),
+            sql`YEAR(expense_date) = ${currentYear}`
+          )
+        )
         .limit(1);
 
       if (existingExpenses.length > 0) {
         stats.processed++;
-        continue; // already has expenses, skip
+        continue; // already has current-year expenses, skip
       }
 
       await sleep(200); // rate limit
@@ -772,6 +775,17 @@ export async function runStartupSync(): Promise<void> {
   if (!db) return;
 
   try {
+    // BUG 6 fix: check if a sync is already running to avoid parallel syncs
+    const runningSync = await db.select({ id: syncLogs.id })
+      .from(syncLogs)
+      .where(eq(syncLogs.status, "running"))
+      .limit(1);
+
+    if (runningSync.length > 0) {
+      console.log("[StartupSync] Sync already running, skipping.");
+      return;
+    }
+
     // Check if we have parliamentarians already
     const count = await db.select({ count: sql`COUNT(*)` }).from(parliamentarians);
     const total = Number((count[0] as any)?.count ?? 0);

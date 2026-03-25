@@ -39,10 +39,8 @@ export default function SearchResults() {
     { enabled: query.trim().length > 0 }
   );
 
-  const { data: scores } = trpc.analysis.trustScore.useQuery(
-    { parliamentarianId: results?.[0]?.id ?? 0 },
-    { enabled: (results?.length ?? 0) > 0 }
-  );
+  // BUG 8 fix: removed stale first-result-only trust score query.
+  // Each ResultCard already fetches its own score individually (see below).
 
   const handleSearch = useCallback(() => {
     if (!searchInput.trim()) return;
