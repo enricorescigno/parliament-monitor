@@ -30,11 +30,16 @@ export const appRouter = router({
   // ─── Parliamentarians ───────────────────────────────────────────────────────
   parliamentarian: router({
     search: publicProcedure
-      .input(z.object({ query: z.string().min(1) }))
+      .input(z.object({ query: z.string(), limit: z.number().optional() }))
       .query(async ({ input, ctx }) => {
-        const results = await searchParliamentarians(input.query);
-        const queryType = /\d{3}\.?\d{3}\.?\d{3}-?\d{2}/.test(input.query) ? "cpf" : "name";
-        await logSearch(input.query, queryType, results.length, ctx.user?.id);
+        // Allow empty query to return a default list (used by Home featured section)
+        const q = input.query.trim();
+        const results = await searchParliamentarians(q, input.limit ?? 10);
+        // Only log non-empty searches
+        if (q) {
+          const queryType = /\d{3}\.?\d{3}\.?\d{3}-?\d{2}/.test(q) ? "cpf" : "name";
+          await logSearch(q, queryType, results.length, ctx.user?.id);
+        }
         return results;
       }),
 

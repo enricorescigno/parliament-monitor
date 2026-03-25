@@ -78,20 +78,26 @@ export async function getParliamentarianByCpf(cpf: string) {
   return result[0] ?? undefined;
 }
 
-export async function searchParliamentarians(query: string) {
+export async function searchParliamentarians(query: string, limit = 10) {
   const db = await getDb();
   if (!db) return [];
+  // Empty query: return a default list ordered by id (used for featured section)
+  if (!query.trim()) {
+    return db.select().from(parliamentarians)
+      .orderBy(desc(parliamentarians.id))
+      .limit(limit);
+  }
   const clean = query.replace(/\D/g, "");
   const isCpf = clean.length >= 11;
   if (isCpf) {
     const formatted = clean.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
     return db.select().from(parliamentarians)
       .where(or(eq(parliamentarians.cpf, formatted), eq(parliamentarians.cpf, clean)))
-      .limit(10);
+      .limit(limit);
   }
   return db.select().from(parliamentarians)
     .where(like(parliamentarians.name, `%${query}%`))
-    .limit(10);
+    .limit(limit);
 }
 
 export async function getParliamentarianById(id: number) {
