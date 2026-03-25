@@ -1,0 +1,46 @@
+{
+  "query": "SELECT COUNT(*) as total_expenses FROM expenses;\nSELECT p.name, p.party, p.state, COUNT(e.id) as expense_count, SUM(CAST(e.amount AS DECIMAL(15,2))) as total_amount\nFROM parliamentarians p\nLEFT JOIN expenses e ON e.parliamentarian_id = p.id\nWHERE p.source_camara = 1\nGROUP BY p.id, p.name, p.party, p.state\nHAVING expense_count > 0\nORDER BY expense_count DESC\nLIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2c5FedMCkXcSGmx.root --database XWQsbiucg6gne5KSMqCyMw --execute SELECT COUNT(*) as total_expenses FROM expenses;\nSELECT p.name, p.party, p.state, COUNT(e.id) as expense_count, SUM(CAST(e.amount AS DECIMAL(15,2))) as total_amount\nFROM parliamentarians p\nLEFT JOIN expenses e ON e.parliamentarian_id = p.id\nWHERE p.source_camara = 1\nGROUP BY p.id, p.name, p.party, p.state\nHAVING expense_count > 0\nORDER BY expense_count DESC\nLIMIT 10;",
+  "rows": [
+    {
+      "total_expenses": "10671"
+    },
+    {
+      "total_expenses": "name\tparty\tstate\texpense_count\ttotal_amount"
+    },
+    {
+      "total_expenses": "Carlos Eduardo Mendes\tPL\tRJ\t96\t464722.58"
+    },
+    {
+      "total_expenses": "DAIANA SILVA DOS SANTOS\tPCdoB\tRS\t60\t69965.86"
+    },
+    {
+      "total_expenses": "CARLOS ALBERTO CHIODINI\tMDB\tSC\t60\t26394.74"
+    },
+    {
+      "total_expenses": "FERNANDO BEZERRA DE SOUZA COELHO FILHO\tUNIÃO\tPE\t60\t79188.60"
+    },
+    {
+      "total_expenses": "FREDERICO DE CASTRO ESCALEIRA\tPRD\tMG\t60\t101705.04"
+    },
+    {
+      "total_expenses": "DIEGO ALEXSANDER GONCALO PAULA GARCIA\tREPUBLICANOS\tPR\t60\t36622.40"
+    },
+    {
+      "total_expenses": "FERNANDO RODRIGUES MÁXIMO\tUNIÃO\tRO\t60\t147149.86"
+    },
+    {
+      "total_expenses": "AUGUSTO RODRIGUES COUTINHO DE MELO\tREPUBLICANOS\tPE\t60\t103284.74"
+    },
+    {
+      "total_expenses": "ARLINDO CHIGNALIA JUNIOR\tPT\tSP\t60\t55466.42"
+    },
+    {
+      "total_expenses": "CLÁUDIO CAJADO SAMPAIO\tPP\tBA\t60\t74521.94"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_expenses\n10671\nname\tparty\tstate\texpense_count\ttotal_amount\nCarlos Eduardo Mendes\tPL\tRJ\t96\t464722.58\nDAIANA SILVA DOS SANTOS\tPCdoB\tRS\t60\t69965.86\nCARLOS ALBERTO CHIODINI\tMDB\tSC\t60\t26394.74\nFERNANDO BEZERRA DE SOUZA COELHO FILHO\tUNIÃO\tPE\t60\t79188.60\nFREDERICO DE CASTRO ESCALEIRA\tPRD\tMG\t60\t101705.04\nDIEGO ALEXSANDER GONCALO PAULA GARCIA\tREPUBLICANOS\tPR\t60\t36622.40\nFERNANDO RODRIGUES MÁXIMO\tUNIÃO\tRO\t60\t147149.86\nAUGUSTO RODRIGUES COUTINHO DE MELO\tREPUBLICANOS\tPE\t60\t103284.74\nARLINDO CHIGNALIA JUNIOR\tPT\tSP\t60\t55466.42\nCLÁUDIO CAJADO SAMPAIO\tPP\tBA\t60\t74521.94\n",
+  "stderr": "",
+  "execution_time_ms": 83
+}

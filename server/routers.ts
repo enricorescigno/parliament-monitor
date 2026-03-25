@@ -11,7 +11,7 @@ import {
   logSearch, getRecentSearches, getAllParliamentarians, countParliamentarians,
 } from "./db";
 import { invokeLLM } from "./_core/llm";
-import { runQuickSync, runFullSync } from "./sync";
+import { runQuickSync, runFullSync, syncExpensesForAll } from "./sync";
 import { getDb } from "./db";
 import { syncLogs } from "../drizzle/schema";
 import { desc } from "drizzle-orm";
@@ -287,6 +287,11 @@ Seja específico, cite valores e datas quando relevante.`;
     }),
 
     // Full sync: imports with expense details (slow, use sparingly)
+    syncExpenses: publicProcedure.mutation(async () => {
+      const result = await syncExpensesForAll(50);
+      return result;
+    }),
+
     fullSync: publicProcedure.mutation(async () => {
       const result = await runFullSync();
       return result;

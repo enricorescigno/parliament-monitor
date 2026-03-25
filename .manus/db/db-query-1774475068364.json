@@ -1,0 +1,52 @@
+{
+  "query": "SELECT COUNT(*) as total_expenses FROM expenses;\nSELECT COUNT(DISTINCT parliamentarian_id) as parls_with_expenses FROM expenses;\nSELECT p.name, p.party, p.state, COUNT(e.id) as expense_count, ROUND(SUM(CAST(e.amount AS DECIMAL(15,2))),2) as total_amount\nFROM parliamentarians p\nJOIN expenses e ON e.parliamentarian_id = p.id\nWHERE p.source_camara = 1\nGROUP BY p.id, p.name, p.party, p.state\nORDER BY total_amount DESC\nLIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2c5FedMCkXcSGmx.root --database XWQsbiucg6gne5KSMqCyMw --execute SELECT COUNT(*) as total_expenses FROM expenses;\nSELECT COUNT(DISTINCT parliamentarian_id) as parls_with_expenses FROM expenses;\nSELECT p.name, p.party, p.state, COUNT(e.id) as expense_count, ROUND(SUM(CAST(e.amount AS DECIMAL(15,2))),2) as total_amount\nFROM parliamentarians p\nJOIN expenses e ON e.parliamentarian_id = p.id\nWHERE p.source_camara = 1\nGROUP BY p.id, p.name, p.party, p.state\nORDER BY total_amount DESC\nLIMIT 10;",
+  "rows": [
+    {
+      "total_expenses": "27608"
+    },
+    {
+      "total_expenses": "parls_with_expenses"
+    },
+    {
+      "total_expenses": "571"
+    },
+    {
+      "total_expenses": "name\tparty\tstate\texpense_count\ttotal_amount"
+    },
+    {
+      "total_expenses": "FÁBIO HENRIQUE DIAS DE  MACEDO\tPODE\tMA\t60\t927581.10"
+    },
+    {
+      "total_expenses": "MARIA DEUSDETE LIMA CUNHA RODRIGUES\tPL\tMA\t60\t856000.00"
+    },
+    {
+      "total_expenses": "Kim Patroca Kataguiri\tMISSÃO\tSP\t11\t551744.98"
+    },
+    {
+      "total_expenses": "Carlos Eduardo Mendes\tPL\tRJ\t96\t464722.58"
+    },
+    {
+      "total_expenses": "Sonize Barbosa\tPL\tAP\t60\t396251.66"
+    },
+    {
+      "total_expenses": "Nelinho Freitas\tMDB\tCE\t54\t363195.96"
+    },
+    {
+      "total_expenses": "Nely Aquino\tPODE\tMG\t60\t283130.32"
+    },
+    {
+      "total_expenses": "Zé Adriano\tPP\tAC\t60\t269636.16"
+    },
+    {
+      "total_expenses": "DOMINGOS GOMES DE AGUIAR NETO\tPSD\tCE\t40\t254572.40"
+    },
+    {
+      "total_expenses": "MAURO IVAN F. SANTIAGO JR\tUNIÃO\tMA\t18\t253925.36"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_expenses\n27608\nparls_with_expenses\n571\nname\tparty\tstate\texpense_count\ttotal_amount\nFÁBIO HENRIQUE DIAS DE  MACEDO\tPODE\tMA\t60\t927581.10\nMARIA DEUSDETE LIMA CUNHA RODRIGUES\tPL\tMA\t60\t856000.00\nKim Patroca Kataguiri\tMISSÃO\tSP\t11\t551744.98\nCarlos Eduardo Mendes\tPL\tRJ\t96\t464722.58\nSonize Barbosa\tPL\tAP\t60\t396251.66\nNelinho Freitas\tMDB\tCE\t54\t363195.96\nNely Aquino\tPODE\tMG\t60\t283130.32\nZé Adriano\tPP\tAC\t60\t269636.16\nDOMINGOS GOMES DE AGUIAR NETO\tPSD\tCE\t40\t254572.40\nMAURO IVAN F. SANTIAGO JR\tUNIÃO\tMA\t18\t253925.36\n",
+  "stderr": "",
+  "execution_time_ms": 136
+}

@@ -7,7 +7,7 @@
 
 import { getDb } from "./db";
 import { parliamentarians, expenses, employees, trustScores, syncLogs } from "../drizzle/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 
 const CAMARA_API = "https://dadosabertos.camara.leg.br/api/v2";
 const SENADO_API = "https://legis.senado.leg.br/dadosabertos";
@@ -638,5 +638,168 @@ export async function runQuickSync(
       .set({ status: "error", completed_at: new Date() })
       .where(eq(syncLogs.status, "running"));
     throw e;
+  }
+}
+
+// ─── Sync expenses for all existing parliamentarians ─────────────────────────
+export async function syncExpensesForAll(
+  batchSize = 50,
+  onProgress?: (current: number, total: number, name: string) => void
+): Promise<{ processed: number; expensesImported: number; errors: number }> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const stats = { processed: 0, expensesImported: 0, errors: 0 };
+
+  // Get all deputies from Câmara (they have external_id starting with "camara-")
+  const allParls = await db.select({
+    id: parliamentarians.id,
+    external_id: parliamentarians.external_id,
+    name: parliamentarians.name,
+  })
+    .from(parliamentarians)
+    .where(eq(parliamentarians.source_camara, true));
+
+  const total = allParls.length;
+  console.log(`[SyncExpenses] Starting expense sync for ${total} deputies...`);
+
+  const currentYear = new Date().getFullYear();
+  const prevYear = currentYear - 1;
+
+  for (let i = 0; i < allParls.length; i++) {
+    const parl = allParls[i];
+    onProgress?.(i + 1, total, parl.name ?? "");
+
+    // Extract Câmara numeric ID from external_id (e.g. "camara-204536" → 204536)
+    const match = parl.external_id?.match(/^camara-(\d+)$/);
+    if (!match) continue;
+    const camaraId = parseInt(match[1]);
+
+    try {
+      // Check if already has expenses
+      const existingExpenses = await db.select({ id: expenses.id })
+        .from(expenses)
+        .where(eq(expenses.parliamentarian_id, parl.id))
+        .limit(1);
+
+      if (existingExpenses.length > 0) {
+        stats.processed++;
+        continue; // already has expenses, skip
+      }
+
+      await sleep(200); // rate limit
+
+      // Fetch expenses for current and previous year
+      let allExpenses: any[] = [];
+      try {
+        const expCurrent = await fetchDeputadoExpenses(camaraId, currentYear);
+        allExpenses.push(...expCurrent);
+      } catch {}
+
+      if (allExpenses.length < 5) {
+        try {
+          await sleep(150);
+          const expPrev = await fetchDeputadoExpenses(camaraId, prevYear);
+          allExpenses.push(...expPrev);
+        } catch {}
+      }
+
+      // Insert up to 30 expenses per parliamentarian
+      let inserted = 0;
+      for (const exp of allExpenses.slice(0, 30)) {
+        if (!exp.valorLiquido || exp.valorLiquido <= 0) continue;
+        try {
+          await db.insert(expenses).values({
+            parliamentarian_id: parl.id,
+            category: exp.tipoDespesa ?? "Outros",
+            amount: String(exp.valorLiquido),
+            expense_date: exp.dataDocumento ? new Date(exp.dataDocumento) : new Date(),
+            supplier_name: exp.nomeFornecedor ?? null,
+            supplier_cnpj: exp.cnpjCpfFornecedor ? String(exp.cnpjCpfFornecedor).slice(0, 18) : null,
+            description: exp.tipoDespesa ?? null,
+            is_suspicious: exp.valorLiquido > 50000,
+            suspicion_reason: exp.valorLiquido > 50000 ? "Valor acima de R$ 50.000" : null,
+            source: "camara",
+          });
+          inserted++;
+        } catch { /* ignore duplicates */ }
+      }
+
+      stats.expensesImported += inserted;
+      stats.processed++;
+
+      // Recalculate trust score with real expense data
+      const suspiciousCount = allExpenses.filter(e => e.valorLiquido > 50000).length;
+      const suspiciousRatio = allExpenses.length > 0 ? suspiciousCount / allExpenses.length : 0;
+
+      const score = calculateTrustScore({
+        hasExpenses: inserted > 0,
+        suspiciousExpenseRatio: suspiciousRatio,
+        ghostCount: 0,
+        totalEmployees: 0,
+        assetGrowthRatio: 1,
+        hasCpf: true,
+      });
+
+      try {
+        await db.update(trustScores)
+          .set({
+            overall_score: score.overall,
+            transparency_score: score.transparency,
+            expense_regularity_score: score.expenseRegularity,
+          })
+          .where(eq(trustScores.parliamentarian_id, parl.id));
+      } catch {}
+
+      // Rate limit: pause every batchSize to avoid hammering the API
+      if ((i + 1) % batchSize === 0) {
+        console.log(`[SyncExpenses] Progress: ${i + 1}/${total} (${stats.expensesImported} expenses imported)`);
+        await sleep(500);
+      }
+    } catch (e) {
+      console.error(`[SyncExpenses] Error for ${parl.name}:`, e);
+      stats.errors++;
+    }
+  }
+
+  console.log(`[SyncExpenses] Done: ${stats.processed} processed, ${stats.expensesImported} expenses imported, ${stats.errors} errors`);
+  return stats;
+}
+
+// ─── Auto-sync on startup ─────────────────────────────────────────────────────
+export async function runStartupSync(): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+
+  try {
+    // Check if we have parliamentarians already
+    const count = await db.select({ count: sql`COUNT(*)` }).from(parliamentarians);
+    const total = Number((count[0] as any)?.count ?? 0);
+
+    if (total < 100) {
+      // First run: import all parliamentarians
+      console.log("[StartupSync] First run detected, importing all parliamentarians...");
+      await runQuickSync();
+    } else {
+      console.log(`[StartupSync] ${total} parliamentarians already in DB, skipping full import.`);
+    }
+
+    // Always check if expenses need to be populated (background, non-blocking)
+    const expCount = await db.select({ count: sql`COUNT(*)` }).from(expenses);
+    const expTotal = Number((expCount[0] as any)?.count ?? 0);
+
+    if (expTotal < 10000) {
+      console.log(`[StartupSync] Only ${expTotal} expenses found, starting background expense sync...`);
+      // Run in background without awaiting
+      syncExpensesForAll(50).then(r => {
+        console.log(`[StartupSync] Background expense sync done: ${r.expensesImported} expenses imported`);
+      }).catch(e => {
+        console.error("[StartupSync] Background expense sync error:", e);
+      });
+    } else {
+      console.log(`[StartupSync] ${expTotal} expenses already in DB, skipping expense sync.`);
+    }
+  } catch (e) {
+    console.error("[StartupSync] Error:", e);
   }
 }

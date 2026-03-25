@@ -7,6 +7,7 @@ import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import { runStartupSync } from "../sync";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -59,6 +60,10 @@ async function startServer() {
 
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
+    // Run startup sync in background (non-blocking)
+    setTimeout(() => {
+      runStartupSync().catch(e => console.error("[StartupSync] Failed:", e));
+    }, 3000); // wait 3s for server to fully initialize
   });
 }
 

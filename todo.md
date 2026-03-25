@@ -68,3 +68,8 @@
 - [x] Criar painel de status de sincronização no frontend
 - [x] Executar importação inicial completa
 - [ ] Agendar sincronização periódica automática (roadmap)
+
+## Dados Reais nos Perfis
+- [x] Importar despesas reais via API Câmara para todos os deputados
+- [x] Sync automático na inicialização do servidor
+- [x] Exibir dados reais de despesas, funcionários e patrimônio nos perfis
